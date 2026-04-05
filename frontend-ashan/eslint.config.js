@@ -1,55 +1,23 @@
-import js from "@eslint/js";
-import globals from "globals";
-import pluginReact from "eslint-plugin-react";
-import prettier from "eslint-config-prettier";
-import { defineConfig } from "eslint/config";
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
+  globalIgnores(['dist']),
   {
-    files: ["**/*.{js,mjs,cjs,jsx}"],
-
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
     languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
-      globals: {
-        ...globals.browser,
-        ...globals.node, // ✅ added Node support
-      },
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
-    },
-
-    plugins: {
-      js,
-      react: pluginReact,
-    },
-
-    rules: {
-      ...js.configs.recommended.rules,
-      ...pluginReact.configs.recommended.rules,
-
-      // React specific fixes
-      "react/react-in-jsx-scope": "off", // Not needed in React 17+
-      "react/prop-types": "off", // Optional (you can enable later)
-
-      // General improvements
-      "no-unused-vars": ["warn"],
-      "no-console": "warn",
+      ecmaVersion: 2020,
+      globals: globals.browser,
     },
   },
-
-  // React settings
-  {
-    settings: {
-      react: {
-        version: "detect",
-      },
-    },
-  },
-
-  // Prettier (must be last)
-  prettier,
-]);
+])
