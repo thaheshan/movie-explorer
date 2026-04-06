@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   loginUser,
   signUpUser,
@@ -9,11 +10,20 @@ import AuthForm from "../components/features/auth/AuthForm";
 
 export default function AuthPage() {
   const dispatch = useDispatch();
-const authState = useSelector((state) => state.auth) || {};
-const { loading, message, error } = authState;
+  const navigate = useNavigate();
+  const authState = useSelector((state) => state.auth) || {};
+  const { loading, message, error, user } = authState;
+
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // ✅ Redirect to home when login is successful
+  useEffect(() => {
+    if (user) {
+      navigate("/home");
+    }
+  }, [user, navigate]);
 
   const handleSubmit = () => {
     if (isLogin) {
@@ -24,7 +34,6 @@ const { loading, message, error } = authState;
   };
 
   return (
-
     <AuthForm
       isLogin={isLogin}
       setIsLogin={setIsLogin}
