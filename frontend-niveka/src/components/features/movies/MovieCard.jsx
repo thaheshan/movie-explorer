@@ -2,9 +2,10 @@ import { useState } from "react";
 import { getImageUrl } from "../../../services/tmdbService";
 import { useNavigate } from "react-router-dom";
 
-export default function MovieCard({ movie, darkMode }) {
+export default function MovieCard({ movie, darkMode, onRemove }) {
   const navigate = useNavigate();
   const dk = darkMode;
+
   const [isFav, setIsFav] = useState(() => {
     const saved = localStorage.getItem("favourites");
     const favs  = saved ? JSON.parse(saved) : [];
@@ -15,11 +16,15 @@ export default function MovieCard({ movie, darkMode }) {
     e.stopPropagation();
     const saved = localStorage.getItem("favourites");
     let favs    = saved ? JSON.parse(saved) : [];
+
     if (isFav) {
       favs = favs.filter((id) => id !== movie.id);
+      // if on favourites page — remove card from list
+      if (onRemove) onRemove(movie.id);
     } else {
       favs.push(movie.id);
     }
+
     localStorage.setItem("favourites", JSON.stringify(favs));
     setIsFav(!isFav);
   };
@@ -33,7 +38,6 @@ export default function MovieCard({ movie, darkMode }) {
           ? "bg-white/4 border border-white/8 hover:border-red-500/40 hover:shadow-xl hover:shadow-red-900/20"
           : "bg-white border border-gray-100 hover:border-red-200 hover:shadow-xl hover:shadow-red-100/60"}`}
     >
-      {/* Poster */}
       <div className="aspect-[2/3] overflow-hidden">
         <img
           src={getImageUrl(movie.poster_path)}
@@ -44,7 +48,7 @@ export default function MovieCard({ movie, darkMode }) {
         />
       </div>
 
-      {/* Hover overlay — title only, no rating */}
+      {/* Hover overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/95
         via-black/30 to-transparent opacity-0 group-hover:opacity-100
         transition-opacity duration-300">
@@ -59,7 +63,7 @@ export default function MovieCard({ movie, darkMode }) {
         </div>
       </div>
 
-      {/* ── Rating badge — top left only ── */}
+      {/* Rating — top left */}
       <div className="absolute top-2 left-2 bg-black/75 backdrop-blur-sm
         rounded-lg px-1.5 py-0.5">
         <span className="text-yellow-400 text-xs font-bold">
@@ -67,7 +71,7 @@ export default function MovieCard({ movie, darkMode }) {
         </span>
       </div>
 
-      {/* ── Favourite button — top right ── */}
+      {/* Favourite — top right */}
       <button
         onClick={toggleFav}
         className={`absolute top-2 right-2 w-7 h-7 rounded-lg flex items-center
@@ -84,15 +88,12 @@ export default function MovieCard({ movie, darkMode }) {
           strokeWidth={isFav ? 0 : 2}
           viewBox="0 0 24 24"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <path strokeLinecap="round" strokeLinejoin="round"
             d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5
               4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
           />
         </svg>
       </button>
-
     </div>
   );
 }

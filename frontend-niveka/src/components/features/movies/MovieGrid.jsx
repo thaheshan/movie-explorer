@@ -1,7 +1,7 @@
 import MovieCard from "./MovieCard";
 import SkeletonCard from "../../ui/SkeletonCard";
 
-export default function MovieGrid({ movies, loading, title, darkMode }) {
+export default function MovieGrid({ movies, loading, title, darkMode, onRemove }) {
   const dk = darkMode;
   return (
     <div className="mb-14">
@@ -22,7 +22,12 @@ export default function MovieGrid({ movies, loading, title, darkMode }) {
               <SkeletonCard key={i} darkMode={darkMode} />
             ))
           : movies?.map((movie) => (
-              <MovieCard key={movie.id} movie={movie} darkMode={darkMode} />
+              <MovieCard
+                key={movie.id}
+                movie={movie}
+                darkMode={darkMode}
+                onRemove={onRemove}
+              />
             ))}
       </div>
     </div>

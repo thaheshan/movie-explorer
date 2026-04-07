@@ -1,5 +1,5 @@
 const BASE_URL = "https://api.themoviedb.org/3";
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+const API_KEY  = import.meta.env.VITE_TMDB_API_KEY;
 
 const get = async (endpoint, params = "") => {
   const res = await fetch(
@@ -13,4 +13,7 @@ export const getPopular     = (page = 1) => get("/movie/popular",        `page=$
 export const getTopRated    = (page = 1) => get("/movie/top_rated",      `page=${page}`);
 export const getNowPlaying  = (page = 1) => get("/movie/now_playing",    `page=${page}`);
 export const searchMovies   = (query)    => get("/search/movie",         `query=${encodeURIComponent(query)}`);
-export const getImageUrl    = (path)     => path ? `https://image.tmdb.org/t/p/w500${path}` : "/no-image.png";
+export const getMovieById   = (id)       => get(`/movie/${id}`);
+export const getMovieCredits = (id)      => get(`/movie/${id}/credits`);
+export const getMovieVideos  = (id)      => get(`/movie/${id}/videos`);
+export const getImageUrl     = (path)    => path ? `https://image.tmdb.org/t/p/w500${path}` : "/no-image.png";
