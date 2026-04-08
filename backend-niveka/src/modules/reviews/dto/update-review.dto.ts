@@ -1,0 +1,14 @@
+import { IsNumber, IsString, Min, Max, MinLength, IsOptional } from 'class-validator';
+
+export class UpdateReviewDto {
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  rating?: number;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(20)
+  body?: string;
+}
