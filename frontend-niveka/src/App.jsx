@@ -9,6 +9,7 @@ import ProfilePage    from "./pages/ProfilePage";
 
 function App() {
   return (
+    
     <BrowserRouter>
       <Routes>
         <Route path="/"               element={<Navigate to="/login" replace />} />
