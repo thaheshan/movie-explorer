@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/layout/Navbar/Navbar";
 import { supabase } from "../services/supabaseClient";
 import { getImageUrl } from "../services/tmdbService";
+import { getMovieById } from "../services/tmdbService";
 
 export default function ProfilePage() {
   const [darkMode, setDarkMode]   = useState(true);
@@ -13,6 +14,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
   const navigate                  = useNavigate();
   const dk                        = darkMode;
+  const [movieTitles, setMovieTitles] = useState({});
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -48,12 +50,29 @@ export default function ProfilePage() {
     fetchAll();
   }, []);
 
+  // ✅ fetch movie titles for all reviews
+useEffect(() => {
+  const fetchTitles = async () => {
+    if (reviews.length === 0) return;
+    const unique = [...new Set(reviews.map((r) => r.movie_id))];
+    const results = await Promise.all(
+      unique.map(async (movieId) => {
+        const data = await getMovieById(movieId);
+        return { id: movieId, title: data?.title || `Movie #${movieId}` };
+      })
+    );
+    const map = {};
+    results.forEach((r) => { map[r.id] = r.title; });
+    setMovieTitles(map);
+  };
+  fetchTitles();
+}, [reviews]);
+
   const avgRating = reviews.length
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : "—";
 
-  const handleSearch   = () => {};
-  const scrollToSearch = () => {};
+  
 
   const removeFromWatchlist = async (movieId) => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -94,8 +113,9 @@ export default function ProfilePage() {
       <Navbar
         darkMode={darkMode}
         setDarkMode={setDarkMode}
-        onSearch={handleSearch}
-        onSearchIconClick={scrollToSearch}
+        onSearch={() => {}}
+        onSearchIconClick={() => {}}
+        hideSearch={true}
       />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
@@ -256,26 +276,26 @@ export default function ProfilePage() {
                   </button>
                 </div>
                 <div className="space-y-3">
-                  {reviews.slice(0, 3).map((r) => (
-                    <div key={r.id}
-                      className={`p-3 rounded-xl
-                        ${dk ? "bg-white/4" : "bg-gray-50"}`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-yellow-400 text-xs">
-                          {"★".repeat(r.rating)}
-                          {"☆".repeat(5 - r.rating)}
-                        </span>
-                        <span className={`text-xs
-                          ${dk ? "text-gray-600" : "text-gray-400"}`}>
-                          Movie #{r.movie_id}
-                        </span>
-                      </div>
-                      <p className={`text-xs line-clamp-2
-                        ${dk ? "text-gray-400" : "text-gray-600"}`}>
-                        {r.body}
-                      </p>
-                    </div>
-                  ))}
+                  {/* Overview tab — recent reviews */}
+{reviews.slice(0, 3).map((r) => (
+  <div key={r.id}
+    className={`p-3 rounded-xl ${dk ? "bg-white/4" : "bg-gray-50"}`}>
+    <div className="flex items-center gap-2 mb-1">
+      <span className="text-yellow-400 text-xs">
+        {"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}
+      </span>
+    </div>
+    {/* ✅ movie name instead of id */}
+    <p className={`text-xs font-medium mb-1
+      ${dk ? "text-gray-300" : "text-gray-700"}`}>
+      {movieTitles[r.movie_id] || "Loading..."}
+    </p>
+    <p className={`text-xs line-clamp-2
+      ${dk ? "text-gray-500" : "text-gray-500"}`}>
+      {r.body}
+    </p>
+  </div>
+))}
                 </div>
               </div>
             )}
@@ -406,57 +426,62 @@ export default function ProfilePage() {
                   Browse Movies
                 </button>
               </div>
-            ) : (
-              reviews.map((r) => (
-                <div key={r.id}
-                  className={`rounded-2xl p-5 border
-                    ${dk
-                      ? "bg-white/3 border-white/8"
-                      : "bg-white border-gray-200 shadow-sm"}`}>
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-yellow-400 text-sm">
-                          {"★".repeat(r.rating)}
-                          <span className={dk ? "text-gray-700" : "text-gray-300"}>
-                            {"★".repeat(5 - r.rating)}
-                          </span>
-                        </span>
-                        <span className={`text-xs font-semibold
-                          ${dk ? "text-white" : "text-gray-900"}`}>
-                          {r.rating} / 5
-                        </span>
-                      </div>
-                      <p className={`text-xs
-                        ${dk ? "text-gray-600" : "text-gray-400"}`}>
-                        Movie #{r.movie_id} ·{" "}
-                        {new Date(r.created_at).toLocaleDateString("en-US", {
-                          day: "numeric", month: "short", year: "numeric",
-                        })}
-                      </p>
-                    </div>
-                    <button onClick={() => deleteReview(r.id)}
-                      className={`p-1.5 rounded-lg transition-colors flex-shrink-0
-                        ${dk
-                          ? "text-gray-600 hover:text-red-400 hover:bg-red-500/10"
-                          : "text-gray-400 hover:text-red-500 hover:bg-red-50"}`}>
-                      <svg className="w-4 h-4" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2
-                            2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1
-                            1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                  <p className={`text-sm leading-relaxed
-                    ${dk ? "text-gray-300" : "text-gray-700"}`}>
-                    {r.body}
-                  </p>
-                </div>
-              ))
-            )}
+            ) : (<> 
+{reviews.map((r) => ( 
+  <div key={r.id}
+    className={`rounded-2xl p-5 border
+      ${dk
+        ? "bg-white/3 border-white/8"
+        : "bg-white border-gray-200 shadow-sm"}`}>
+    <div className="flex items-start justify-between gap-4 mb-3">
+      <div>
+        {/* ✅ movie name */}
+        <p className={`text-sm font-semibold mb-1
+          ${dk ? "text-white" : "text-gray-900"}`}>
+          {movieTitles[r.movie_id] || "Loading..."}
+        </p>
+        <div className="flex items-center gap-2">
+          <span className="text-yellow-400 text-sm">
+            {"★".repeat(r.rating)}
+            <span className={dk ? "text-gray-700" : "text-gray-300"}>
+              {"★".repeat(5 - r.rating)}
+            </span>
+          </span>
+          <span className={`text-xs font-semibold
+            ${dk ? "text-white" : "text-gray-900"}`}>
+            {r.rating} / 5
+          </span>
+        </div>
+        <p className={`text-xs mt-1
+          ${dk ? "text-gray-600" : "text-gray-400"}`}>
+          {new Date(r.created_at).toLocaleDateString("en-US", {
+            day: "numeric", month: "short", year: "numeric",
+          })}
+        </p>
+      </div>
+      <button
+        onClick={() => deleteReview(r.id)}
+        className={`p-1.5 rounded-lg transition-colors flex-shrink-0
+          ${dk
+            ? "text-gray-600 hover:text-red-400 hover:bg-red-500/10"
+            : "text-gray-400 hover:text-red-500 hover:bg-red-50"}`}>
+        <svg className="w-4 h-4" fill="none"
+          stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0
+              01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1
+              1 0 00-1 1v3M4 7h16" />
+        </svg>
+      </button>
+    </div>
+    <p className={`text-sm leading-relaxed
+      ${dk ? "text-gray-300" : "text-gray-700"}`}>
+      {r.body}
+    </p>
+  </div>
+))} 
+              </>)}
           </div>
         )}
 
