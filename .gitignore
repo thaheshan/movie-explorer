@@ -29,4 +29,25 @@ lerna-debug.log*
 .env
 .env.local
 .env.*.local
+node_modules
+
+# Ignore build output
+dist
+build
+
+# Ignore environment variables
+.env
+
+# Ignore log files
+*.log
+
+# Ignore OS-specific files
+.DS_Store
+
+# Ignore IDE-specific files
+.vscode/
+
+# Ignore nested git backup metadata
+backend-havindu/.git.backup/
+
 
