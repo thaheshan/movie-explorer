@@ -1,12 +1,12 @@
-import { useState } from 'react'
 import './App.scss'
+import TestTMDB from './components/TestTMDB'
 
 function App() {
   
 
   return (
     <>
-    <h1>hellow world</h1>
+    <TestTMDB />
     </>
   )
 }
