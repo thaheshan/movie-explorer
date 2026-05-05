@@ -95,7 +95,7 @@ movie-explorer/
 
 ### Prerequisites
 
-- Node.js v18+
+- Node.js v20+  (required by @supabase/supabase-js v2.104.0+)
 - A free [TMDb API key](https://developer.themoviedb.org/docs)
 - A free [Supabase](https://supabase.com) project
 - (Optional) A free [OMDb API key](https://www.omdbapi.com/)
