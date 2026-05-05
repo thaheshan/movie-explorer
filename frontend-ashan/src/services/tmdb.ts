@@ -1,6 +1,15 @@
 import axios from 'axios'
+import type { AxiosResponse } from 'axios'
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY
+
+// Runtime guard
+if (!API_KEY) {
+  throw new Error(
+    'VITE_TMDB_API_KEY environment variable is not set. ' +
+    'Please add it to your .env file.'
+  )
+}
 
 const tmdb = axios.create({
   baseURL: 'https://api.themoviedb.org/3',
@@ -9,13 +18,25 @@ const tmdb = axios.create({
   },
 })
 
-// Error handler
-const handleRequest = async (request: Promise<any>, name: string) => {
+// Error handler with proper TypeScript type safety
+const handleRequest = async <T,>(
+  request: Promise<AxiosResponse<T>>,
+  name: string
+): Promise<T> => {
   try {
     const response = await request
     return response.data
-  } catch (error: any) {
-    throw new Error(`${name} failed: ${error.response?.data?.status_message || error.message}`)
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      // Now TypeScript knows this is an Axios error
+      throw new Error(
+        `${name} failed: ${error.response?.data?.status_message || error.message}`
+      )
+    }
+    // Handle unexpected non-Axios errors
+    throw new Error(
+      `${name} failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
   }
 }
 

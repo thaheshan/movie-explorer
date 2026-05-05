@@ -1,12 +1,11 @@
 import './App.scss'
-import TestTMDB from './components/TestTMDB'
 
 function App() {
   
 
   return (
     <>
-    <TestTMDB />
+    <h1>Movie Explorer</h1>
     </>
   )
 }
