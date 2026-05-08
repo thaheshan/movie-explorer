@@ -1,15 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Film, User, Mail, Lock, AlertCircle, ArrowRight, Check, X } from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
+import { Lock, AlertCircle, CheckCircle2, ArrowLeft, Check, X } from 'lucide-react'
+import { supabase } from '../services/supabase'
 
 const mapAuthError = (errorMessage: string): string => {
   const errorMap: Record<string, string> = {
-    'User already registered': 'This email is already registered. Please try logging in.',
-    'Invalid email': 'Please enter a valid email address.',
-    'Password should be at least 8 characters': 'Password must be at least 8 characters.',
-    'Email already exists': 'This email is already registered. Please try logging in.',
-    'duplicate key': 'This email is already registered. Please try logging in.',
+    'Invalid password': 'Password does not meet security requirements.',
+    'Password should be at least': 'Password must be at least 8 characters.',
+    'New password should be different': 'New password must be different from your current password.',
   }
 
   for (const [key, value] of Object.entries(errorMap)) {
@@ -18,7 +16,7 @@ const mapAuthError = (errorMessage: string): string => {
     }
   }
 
-  return 'Failed to create account. Please try again.'
+  return 'Failed to reset password. Please try again.'
 }
 
 interface PasswordStrength {
@@ -56,44 +54,47 @@ const validatePasswordStrength = (password: string): PasswordStrength => {
   }
 }
 
-export default function SignUp() {
-  const { signUp } = useAuth()
-  const navigate = useNavigate()
-
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
+export default function ResetPassword() {
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string>('')
+  const [success, setSuccess] = useState(false)
+  const navigate = useNavigate()
 
   const passwordStrength = validatePasswordStrength(password)
 
-  const validate = (): string => {
-    if (username.trim().length < 3) return 'Username must be at least 3 characters.'
-    if (!/\S+@\S+\.\S+/.test(email)) return 'Please enter a valid email address.'
-    if (password.length < 8) return 'Password must be at least 8 characters.'
-    if (!passwordStrength.isStrong) return 'Password is not strong enough. ' + passwordStrength.feedback.join(', ') + '.'
-    return ''
-  }
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setError('')
 
-    const validationError = validate()
-    if (validationError) {
-      setError(validationError)
+    // Validation
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.')
       return
     }
 
+    if (!passwordStrength.isStrong) {
+      setError('Password is not strong enough. ' + passwordStrength.feedback.join(', ') + '.')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
+
+    setLoading(true)
     try {
-      setError('')
-      setLoading(true)
-      await signUp(email, password, username)
-      navigate('/')
-    } catch (err: unknown) {
-      const error = err as { message?: string }
-      const sanitizedError = mapAuthError(error.message || '')
-      setError(sanitizedError)
+      const { error } = await supabase.auth.updateUser({ password })
+      if (error) throw error
+
+      setSuccess(true)
+      setTimeout(() => navigate('/'), 2000)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to reset password'
+      const sanitized = mapAuthError(errorMessage)
+      setError(sanitized)
     } finally {
       setLoading(false)
     }
@@ -118,18 +119,35 @@ export default function SignUp() {
   return (
     <div className="flex items-center justify-center min-h-screen px-4 py-12 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="w-full max-w-md">
+        {/* Back Button */}
+        <Link
+          to="/login"
+          className="inline-flex items-center gap-2 mb-8 transition-colors text-slate-400 hover:text-slate-200"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Login
+        </Link>
+
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="inline-block p-3 mb-4 shadow-lg bg-gradient-to-r from-red-600 to-pink-600 rounded-xl shadow-red-500/25">
-            <Film className="w-8 h-8 text-white" />
+            <Lock className="w-8 h-8 text-white" />
           </div>
-          <h1 className="mb-2 text-3xl font-bold text-white">Join Movie Explorer</h1>
-          <p className="text-sm text-slate-400">Create an account and start reviewing movies</p>
+          <h1 className="mb-2 text-3xl font-bold text-white">Reset Password</h1>
+          <p className="text-sm text-slate-400">Create a new secure password for your account</p>
         </div>
 
         {/* Form Card */}
         <div className="p-8 border shadow-2xl bg-slate-800/50 backdrop-blur-xl rounded-2xl border-slate-700/50">
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleResetPassword} className="space-y-6">
+            {/* Success Message */}
+            {success && (
+              <div className="flex items-start gap-3 px-4 py-3 border bg-green-500/10 border-green-500/30 rounded-xl">
+                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-green-200">Password reset successfully! Redirecting...</p>
+              </div>
+            )}
+
             {/* Error Message */}
             {error && (
               <div className="flex items-start gap-3 px-4 py-3 border bg-red-500/10 border-red-500/30 rounded-xl">
@@ -138,51 +156,10 @@ export default function SignUp() {
               </div>
             )}
 
-            {/* Username Field */}
-            <div className="space-y-2">
-              <label htmlFor="username" className="text-sm font-medium text-slate-300">
-                Username
-              </label>
-              <div className="relative">
-                <User className="absolute w-5 h-5 -translate-y-1/2 left-4 top-1/2 text-slate-500" />
-                <input
-                  id="username"
-                  type="text"
-                  placeholder="Choose your username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  disabled={loading}
-                  required
-                  className="w-full rounded-2xl border border-slate-700 bg-slate-800/80 py-3.5 pl-12 pr-4 text-white placeholder-slate-500 transition-all duration-300 focus:border-red-500 focus:outline-none focus:ring-4 focus:ring-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-              </div>
-              <p className="text-xs text-slate-500">Minimum 3 characters</p>
-            </div>
-
-            {/* Email Field */}
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-slate-300">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute w-5 h-5 -translate-y-1/2 left-4 top-1/2 text-slate-500" />
-                <input
-                  id="email"
-                  type="email"
-                  placeholder="your.email@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                  required
-                  className="w-full rounded-2xl border border-slate-700 bg-slate-800/80 py-3.5 pl-12 pr-4 text-white placeholder-slate-500 transition-all duration-300 focus:border-red-500 focus:outline-none focus:ring-4 focus:ring-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-              </div>
-            </div>
-
-            {/* Password Field */}
+            {/* New Password Field */}
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium text-slate-300">
-                Password
+                New Password
               </label>
               <div className="relative">
                 <Lock className="absolute w-5 h-5 -translate-y-1/2 left-4 top-1/2 text-slate-500" />
@@ -192,7 +169,7 @@ export default function SignUp() {
                   placeholder="Create a strong password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
+                  disabled={loading || success}
                   required
                   className="w-full rounded-2xl border border-slate-700 bg-slate-800/80 py-3.5 pl-12 pr-4 text-white placeholder-slate-500 transition-all duration-300 focus:border-red-500 focus:outline-none focus:ring-4 focus:ring-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
@@ -240,10 +217,36 @@ export default function SignUp() {
               </p>
             </div>
 
+            {/* Confirm Password Field */}
+            <div className="space-y-2">
+              <label htmlFor="confirmPassword" className="text-sm font-medium text-slate-300">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute w-5 h-5 -translate-y-1/2 left-4 top-1/2 text-slate-500" />
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Confirm your password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={loading || success}
+                  required
+                  className="w-full rounded-2xl border border-slate-700 bg-slate-800/80 py-3.5 pl-12 pr-4 text-white placeholder-slate-500 transition-all duration-300 focus:border-red-500 focus:outline-none focus:ring-4 focus:ring-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+              {password && confirmPassword && password === confirmPassword && (
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-400" />
+                  <span className="text-xs text-green-300">Passwords match</span>
+                </div>
+              )}
+            </div>
+
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading || !passwordStrength.isStrong}
+              disabled={loading || success || !passwordStrength.isStrong || password !== confirmPassword}
               className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-600 to-pink-600 px-4 py-3.5 font-semibold text-white shadow-lg shadow-red-500/25 transition-all duration-300 hover:scale-[1.02] hover:from-red-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {loading ? (
@@ -263,13 +266,10 @@ export default function SignUp() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
-                  Creating Account...
+                  Resetting...
                 </>
               ) : (
-                <>
-                  <span>Create Account</span>
-                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                </>
+                'Reset Password'
               )}
             </button>
 
@@ -279,31 +279,19 @@ export default function SignUp() {
                 <div className="w-full border-t border-slate-700" />
               </div>
               <div className="relative flex justify-center">
-                <span className="px-4 text-sm bg-slate-800/50 text-slate-500">Already a member?</span>
+                <span className="px-4 text-sm bg-slate-800/50 text-slate-500">or</span>
               </div>
             </div>
 
-            {/* Login Link */}
+            {/* Back to Login */}
             <Link
               to="/login"
               className="block w-full rounded-2xl border border-slate-700 bg-slate-800/60 px-4 py-3.5 text-center font-medium text-slate-200 transition-all duration-300 hover:border-slate-600 hover:bg-slate-800 hover:text-white hover:shadow-lg"
             >
-              Sign In Instead
+              Return to Login
             </Link>
           </form>
         </div>
-
-        {/* Footer */}
-        <p className="mt-8 text-xs text-center text-slate-500">
-          By signing up, you agree to our{' '}
-          <a href="#" className="text-red-500 transition-colors hover:text-red-400">
-            Terms
-          </a>{' '}
-          and{' '}
-          <a href="#" className="text-red-500 transition-colors hover:text-red-400">
-            Privacy
-          </a>
-        </p>
       </div>
     </div>
   )

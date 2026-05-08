@@ -1,10 +1,67 @@
 import { useAuth } from '../context/AuthContext'
 import { useNavigate, Link } from 'react-router-dom'
-import { Bookmark, Star, Film, TrendingUp, Clock, Heart, Play } from 'lucide-react'
+import { Bookmark, Star, Film, TrendingUp, Clock, Heart, Play, Zap } from 'lucide-react'
+import { useMovies } from '../hooks/useMovies'
+import { tmdbService } from '../services/tmdbService'
+import MovieCard from '../components/MovieCard/MovieCard'
+
+const MovieSection = ({ 
+  title, 
+  icon: Icon, 
+  movies, 
+  loading 
+}: {
+  title: string
+  icon: React.ComponentType<{ className?: string }>
+  movies: any[]
+  loading: boolean
+}) => (
+  <section className="mt-12">
+    <div className="flex items-center gap-3 mb-6">
+      <Icon className="w-6 h-6 text-red-400" />
+      <h2 className="text-2xl font-bold">{title}</h2>
+    </div>
+    
+    {loading ? (
+      <div className="flex gap-4 pb-4 overflow-x-auto">
+        {[...Array(5)].map((_, i) => (
+          <div
+            key={i}
+            className="flex-shrink-0 w-48 rounded-lg h-80 bg-slate-800 animate-pulse"
+          />
+        ))}
+      </div>
+    ) : movies.length > 0 ? (
+      <div className="flex gap-4 pb-4 overflow-x-auto">
+        {movies.map((movie) => (
+          <MovieCard key={movie.id} movie={movie} />
+        ))}
+      </div>
+    ) : (
+      <div className="py-8 text-center text-slate-400">
+        <p>No movies available</p>
+      </div>
+    )}
+  </section>
+)
 
 export default function HomePage() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
+
+  // Fetch movies from TMDb
+  const { movies: trending, loading: trendingLoading } = useMovies(() =>
+    tmdbService.getTrendingMovies()
+  )
+  const { movies: popular, loading: popularLoading } = useMovies(() =>
+    tmdbService.getPopularMovies()
+  )
+  const { movies: topRated, loading: topRatedLoading } = useMovies(() =>
+    tmdbService.getTopRatedMovies()
+  )
+  const { movies: nowPlaying, loading: nowPlayingLoading } = useMovies(() =>
+    tmdbService.getNowPlayingMovies()
+  )
 
   const handleLogOut = async (): Promise<void> => {
     try {
@@ -20,7 +77,21 @@ export default function HomePage() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(239,68,68,0.18),_transparent_30%),radial-gradient(circle_at_top_left,_rgba(168,85,247,0.12),_transparent_25%)]" />
 
       <div className="relative z-10">
-       
+        {/* Navbar */}
+        <nav className="px-4 py-4 border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm">
+          <div className="flex items-center justify-between mx-auto max-w-7xl">
+            <div className="flex items-center gap-2">
+              <Film className="w-6 h-6 text-red-500" />
+              <span className="text-xl font-bold text-white">Movie Explorer</span>
+            </div>
+            <button
+              onClick={handleLogOut}
+              className="px-4 py-2 text-sm font-medium text-white transition-colors bg-red-600 rounded-lg hover:bg-red-700"
+            >
+              Sign Out
+            </button>
+          </div>
+        </nav>
 
         <main className="px-4 py-10 mx-auto max-w-7xl sm:px-6 lg:px-8">
           {/* Hero Section */}
@@ -37,7 +108,7 @@ export default function HomePage() {
                 <h1 className="mb-4 text-4xl font-bold leading-tight md:text-6xl">
                   Welcome back,
                   <span className="block text-transparent bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text">
-                    Movie Lover
+                    {user?.email?.split('@')[0] || 'Movie Lover'}
                   </span>
                 </h1>
 
@@ -118,44 +189,34 @@ export default function HomePage() {
             ))}
           </section>
 
-          {/* Quick Actions & Trending */}
-          <section className="grid grid-cols-1 gap-8 mt-10 lg:grid-cols-3">
-            <div className="p-8 border lg:col-span-2 rounded-2xl border-slate-800 bg-slate-900/80">
-              <div className="flex items-center gap-3 mb-6">
-                <TrendingUp className="w-6 h-6 text-red-400" />
-                <h2 className="text-2xl font-bold">Quick Actions</h2>
-              </div>
+          {/* Movie Sections */}
+          <MovieSection
+            title="Trending Now"
+            icon={TrendingUp}
+            movies={trending}
+            loading={trendingLoading}
+          />
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Link
-                  to="/movies/popular"
-                  className="p-6 transition-all duration-300 border rounded-2xl border-slate-700 bg-slate-800 hover:border-red-500/50 hover:bg-slate-800/90"
-                >
-                  <Film className="w-8 h-8 mb-4 text-red-400" />
-                  <h3 className="mb-2 text-lg font-semibold">Popular Movies</h3>
-                  <p className="text-slate-400">Browse what everyone is watching right now.</p>
-                </Link>
+          <MovieSection
+            title="Popular Movies"
+            icon={Star}
+            movies={popular}
+            loading={popularLoading}
+          />
 
-                <Link
-                  to="/watchlist"
-                  className="p-6 transition-all duration-300 border rounded-2xl border-slate-700 bg-slate-800 hover:border-red-500/50 hover:bg-slate-800/90"
-                >
-                  <Bookmark className="w-8 h-8 mb-4 text-red-400" />
-                  <h3 className="mb-2 text-lg font-semibold">My Watchlist</h3>
-                  <p className="text-slate-400">Track movies you want to watch next.</p>
-                </Link>
-              </div>
-            </div>
+          <MovieSection
+            title="Top Rated"
+            icon={Zap}
+            movies={topRated}
+            loading={topRatedLoading}
+          />
 
-            <div className="p-8 border rounded-2xl border-slate-800 bg-slate-900/80">
-              <h2 className="mb-6 text-2xl font-bold">Activity</h2>
-              <div className="flex flex-col items-center justify-center h-64 text-center border border-dashed rounded-2xl border-slate-700 bg-slate-800/50">
-                <Film className="mb-4 h-14 w-14 text-slate-600" />
-                <p className="text-lg font-medium text-slate-300">No activity yet</p>
-                <p className="mt-2 text-sm text-slate-500">Start exploring and reviewing movies.</p>
-              </div>
-            </div>
-          </section>
+          <MovieSection
+            title="Now Playing in Theaters"
+            icon={Film}
+            movies={nowPlaying}
+            loading={nowPlayingLoading}
+          />
         </main>
       </div>
     </div>

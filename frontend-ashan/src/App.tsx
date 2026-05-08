@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import HomePage from './pages/HomePage'
 import { useAuth } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -12,8 +13,8 @@ function App() {
 
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="spinner">Loading...</div>
+      <div className="flex items-center justify-center min-h-screen bg-slate-950">
+        <div className="w-12 h-12 border-4 rounded-full border-slate-300 animate-spin border-t-red-500" />
       </div>
     )
   }
@@ -25,6 +26,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Protected routes */}
         <Route
@@ -35,22 +37,9 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/watchlist"
-          element={
-            <ProtectedRoute>
-              <div>Watchlist Page (Coming Soon)</div>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <div>Profile Page (Coming Soon)</div>
-            </ProtectedRoute>
-          }
-        />
+
+        {/* 404 fallback */}
+        <Route path="*" element={<div className="flex items-center justify-center min-h-screen text-white">Page not found</div>} />
       </Routes>
     </Router>
   )

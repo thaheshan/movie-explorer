@@ -5,12 +5,12 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-
+import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '../services/supabase'
 
 type AuthContextType = {
-  user: any
-  session: any
+  user: User | null
+  session: Session | null
   loading: boolean
   signUp: (email: string, password: string, username: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
@@ -21,8 +21,8 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<any>(null)
-  const [session, setSession] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -52,41 +52,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const signUp = async (
-  email: string,
-  password: string,
-  username: string
-) => {
-  try {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username,
-        },
-      },
-    })
-    if (error) throw error
-
-    // Insert user profile into profiles table
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: data.user.id,
-            username: username,
-            email: email,
-            created_at: new Date(),
+    email: string,
+    password: string,
+    username: string
+  ) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
           },
-        ])
-      if (profileError) throw profileError
+        },
+      })
+      if (error) throw error
+
+      // Insert user profile into profiles table
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: data.user.id,
+              username: username,
+              email: email,
+              created_at: new Date(),
+            },
+          ])
+        if (profileError) throw profileError
+      }
+    } catch (error) {
+      console.error('Sign up error:', error)
+      throw error
     }
-  } catch (error) {
-    console.error('Sign up error:', error)
-    throw error
   }
-}
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -105,8 +105,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      setUser(null)
-      setSession(null)
     } catch (error) {
       console.error('Sign out error:', error)
       throw error
@@ -120,25 +118,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       })
       if (error) throw error
     } catch (error) {
-      console.error('Password reset error:', error)
+      console.error('Reset password error:', error)
       throw error
     }
   }
 
-  const value: AuthContextType = {
-    user,
-    session,
-    loading,
-    signUp,
-    signIn,
-    signOut,
-    resetPassword,
-  }
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        loading,
+        signUp,
+        signIn,
+        signOut,
+        resetPassword,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
-export const useAuth = (): AuthContextType => {
+export const useAuth = () => {
   const context = useContext(AuthContext)
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider')

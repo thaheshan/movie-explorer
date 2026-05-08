@@ -3,6 +3,25 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Film, Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
+const mapAuthError = (errorMessage: string): string => {
+  const errorMap: Record<string, string> = {
+    'Invalid login credentials': 'Email or password is incorrect.',
+    'User not found': 'Email or password is incorrect.',
+    'Email not confirmed': 'Please confirm your email before signing in.',
+    'User already registered': 'This email is already registered.',
+    'Invalid email': 'Please enter a valid email address.',
+    'Password should be at least 8 characters': 'Password must be at least 8 characters.',
+  }
+
+  for (const [key, value] of Object.entries(errorMap)) {
+    if (errorMessage.toLowerCase().includes(key.toLowerCase())) {
+      return value
+    }
+  }
+
+  return 'Failed to log in. Please try again.'
+}
+
 export default function Login() {
   const { signIn } = useAuth()
   const navigate = useNavigate()
@@ -40,7 +59,8 @@ export default function Login() {
       navigate('/')
     } catch (err: unknown) {
       const error = err as { message?: string }
-      setError(error.message || 'Failed to log in. Please try again.')
+      const sanitizedError = mapAuthError(error.message || '')
+      setError(sanitizedError)
     } finally {
       setLoading(false)
     }
