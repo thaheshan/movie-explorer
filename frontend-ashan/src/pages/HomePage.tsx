@@ -1,27 +1,37 @@
-import { useAuth } from '../context/AuthContext'
-import { useNavigate, Link } from 'react-router-dom'
-import { Bookmark, Star, Film, TrendingUp, Clock, Heart, Play, Zap } from 'lucide-react'
-import { useMovies } from '../hooks/useMovies'
-import { tmdbService } from '../services/tmdbService'
-import MovieCard from '../components/MovieCard/MovieCard'
+import { useAuth } from "../context/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  Bookmark,
+  Star,
+  Film,
+  TrendingUp,
+  Clock,
+  Heart,
+  Play,
+  Zap,
+} from "lucide-react";
+import { useMovies } from "../hooks/useMovies";
+import { tmdbService } from "../services/tmdbService";
+import MovieCard from "../components/MovieCard/MovieCard";
+import Navbar from "../components/Navbar/Navbar";
 
-const MovieSection = ({ 
-  title, 
-  icon: Icon, 
-  movies, 
-  loading 
+const MovieSection = ({
+  title,
+  icon: Icon,
+  movies,
+  loading,
 }: {
-  title: string
-  icon: React.ComponentType<{ className?: string }>
-  movies: any[]
-  loading: boolean
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  movies: any[];
+  loading: boolean;
 }) => (
   <section className="mt-12">
     <div className="flex items-center gap-3 mb-6">
       <Icon className="w-6 h-6 text-red-400" />
       <h2 className="text-2xl font-bold">{title}</h2>
     </div>
-    
+
     {loading ? (
       <div className="flex gap-4 pb-4 overflow-x-auto">
         {[...Array(5)].map((_, i) => (
@@ -43,34 +53,34 @@ const MovieSection = ({
       </div>
     )}
   </section>
-)
+);
 
 export default function HomePage() {
-  const { user, signOut } = useAuth()
-  const navigate = useNavigate()
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch movies from TMDb
   const { movies: trending, loading: trendingLoading } = useMovies(() =>
-    tmdbService.getTrendingMovies()
-  )
+    tmdbService.getTrendingMovies(),
+  );
   const { movies: popular, loading: popularLoading } = useMovies(() =>
-    tmdbService.getPopularMovies()
-  )
+    tmdbService.getPopularMovies(),
+  );
   const { movies: topRated, loading: topRatedLoading } = useMovies(() =>
-    tmdbService.getTopRatedMovies()
-  )
+    tmdbService.getTopRatedMovies(),
+  );
   const { movies: nowPlaying, loading: nowPlayingLoading } = useMovies(() =>
-    tmdbService.getNowPlayingMovies()
-  )
+    tmdbService.getNowPlayingMovies(),
+  );
 
   const handleLogOut = async (): Promise<void> => {
     try {
-      await signOut()
-      navigate('/login')
+      await signOut();
+      navigate("/login");
     } catch (err: unknown) {
-      console.error('Error logging out:', err)
+      console.error("Error logging out:", err);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen text-white bg-slate-950">
@@ -78,21 +88,7 @@ export default function HomePage() {
 
       <div className="relative z-10">
         {/* Navbar */}
-        <nav className="px-4 py-4 border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm">
-          <div className="flex items-center justify-between mx-auto max-w-7xl">
-            <div className="flex items-center gap-2">
-              <Film className="w-6 h-6 text-red-500" />
-              <span className="text-xl font-bold text-white">Movie Explorer</span>
-            </div>
-            <button
-              onClick={handleLogOut}
-              className="px-4 py-2 text-sm font-medium text-white transition-colors bg-red-600 rounded-lg hover:bg-red-700"
-            >
-              Sign Out
-            </button>
-          </div>
-        </nav>
-
+        <Navbar />
         <main className="px-4 py-10 mx-auto max-w-7xl sm:px-6 lg:px-8">
           {/* Hero Section */}
           <section className="relative p-8 overflow-hidden border shadow-2xl rounded-3xl border-slate-800 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 md:p-12">
@@ -108,12 +104,13 @@ export default function HomePage() {
                 <h1 className="mb-4 text-4xl font-bold leading-tight md:text-6xl">
                   Welcome back,
                   <span className="block text-transparent bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text">
-                    {user?.email?.split('@')[0] || 'Movie Lover'}
+                    {user?.email?.split("@")[0] || "Movie Lover"}
                   </span>
                 </h1>
 
                 <p className="mb-6 text-lg leading-relaxed text-slate-300 md:text-xl">
-                  Discover trending films, write reviews, and build your ultimate watchlist all in one place.
+                  Discover trending films, write reviews, and build your
+                  ultimate watchlist all in one place.
                 </p>
 
                 <div className="flex flex-wrap items-center gap-4">
@@ -153,21 +150,21 @@ export default function HomePage() {
           <section className="grid grid-cols-1 gap-6 mt-10 md:grid-cols-3">
             {[
               {
-                title: 'Saved to Watchlist',
-                value: '0',
-                subtitle: 'Movies',
+                title: "Saved to Watchlist",
+                value: "0",
+                subtitle: "Movies",
                 icon: Bookmark,
               },
               {
-                title: 'Reviews Written',
-                value: '0',
-                subtitle: 'Reviews',
+                title: "Reviews Written",
+                value: "0",
+                subtitle: "Reviews",
                 icon: Star,
               },
               {
-                title: 'Movies Watched',
-                value: '0',
-                subtitle: 'Completed',
+                title: "Movies Watched",
+                value: "0",
+                subtitle: "Completed",
                 icon: Clock,
               },
             ].map((stat) => (
@@ -177,8 +174,12 @@ export default function HomePage() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-400">{stat.title}</p>
-                    <p className="mt-2 text-4xl font-bold text-white">{stat.value}</p>
+                    <p className="text-sm font-medium text-slate-400">
+                      {stat.title}
+                    </p>
+                    <p className="mt-2 text-4xl font-bold text-white">
+                      {stat.value}
+                    </p>
                     <p className="text-slate-500">{stat.subtitle}</p>
                   </div>
                   <div className="p-4 transition-transform duration-300 shadow-lg rounded-2xl bg-gradient-to-br from-red-500 to-pink-600 group-hover:scale-110">
@@ -220,5 +221,5 @@ export default function HomePage() {
         </main>
       </div>
     </div>
-  )
+  );
 }
